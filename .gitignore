@@ -1,31 +1,21 @@
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-logs/
-*.log
-
-# IDE
-.idea/
-.vscode/
-
-# Build
-build/
-dist/
-out/
-*.class
-
-# Node/Python caches (in case)
-node_modules/
-.venv/
-__pycache__/
-
-# Gradle
-.gradle/
-
-# Local env and secrets
+# Secrets and environment
 .env
 **/.env
 dispatch_chat_id.txt
 
+# Logs
+*.log
+
+# Build/Gradle
+.gradle/
+build/
+**/build/
+
+# IDE
+.idea/
+*.iml
+out/
+
+# OS
+.DS_Store
+Thumbs.db
