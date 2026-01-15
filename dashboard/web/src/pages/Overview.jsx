@@ -1,104 +1,284 @@
 import React, { useEffect, useState } from "react";
+import { Row, Col, Card, Badge, ProgressBar, Spinner } from "react-bootstrap";
 import { opsEvents, opsRides } from "../api/client";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import Button from "@/components/ui/button";
-import { ActivitySquare, BarChart3, FileText } from "lucide-react";
 
 export default function Overview() {
   const [rides, setRides] = useState([]);
   const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    opsRides().then(setRides).catch(() => setRides([]));
-    opsEvents().then(setEvents).catch(() => setEvents([]));
+    loadData();
+    const interval = setInterval(loadData, 5000);
+    return () => clearInterval(interval);
   }, []);
-  const active = rides.filter(r => r.status && !["completed","cancelled"].includes(r.status.toLowerCase())).length;
+
+  const loadData = async () => {
+    try {
+      const [ridesData, eventsData] = await Promise.all([
+        opsRides().catch(() => []),
+        opsEvents().catch(() => [])
+      ]);
+      setRides(ridesData);
+      setEvents(eventsData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const activeRides = rides.filter(r => 
+    r.status && !["completed", "cancelled"].includes(r.status.toLowerCase())
+  );
+
+  const completedToday = rides.filter(r => 
+    r.status && r.status.toLowerCase() === "completed"
+  );
+
+  const revenue = completedToday.length * 15.5; // Mock calculation
+
+  const statusColors = {
+    processing: "warning",
+    accepted: "info",
+    arriving: "primary",
+    in_progress: "success",
+    completed: "secondary",
+    cancelled: "danger"
+  };
+
   return (
-    <div className="grid gap-6 md:grid-cols-3">
-      <Card className="relative overflow-hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ActivitySquare className="h-4 w-4 text-cyan-400" />
-            Active Rides
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-end justify-between">
-            <div className="text-3xl font-bold text-cyan-300">{active}</div>
-            <div className="relative">
-              <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-cyan-500 animate-ping opacity-75" />
-              <span className="relative h-10 w-10 rounded-full bg-gradient-to-br from-cyan-500 to-violet-500 shadow-[0_0_0_1px_rgba(34,211,238,0.25)]" />
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-neutral-400">Live pulse shows ongoing operations</p>
-        </CardContent>
-      </Card>
+    <div>
+      <div className="mb-3">
+        <h1 className="display-6 fw-bold text-dark mb-1">
+          <i className="bi bi-speedometer2 text-primary me-2"></i>
+          Dashboard Overview
+        </h1>
+        <p className="text-muted mb-0">Real-time transport operations monitoring</p>
+      </div>
 
-      <Card className="relative overflow-hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-violet-400" />
-            Total Rides
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-end justify-between">
-            <div className="text-3xl font-bold text-violet-300">{rides.length}</div>
-            <div className="flex items-center gap-2 text-xs text-neutral-400">
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/5 border border-white/10">
-                <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
-                Trend
-              </span>
-            </div>
-          </div>
-          <div className="mt-3 h-8 w-full rounded-md bg-gradient-to-r from-violet-500/20 to-cyan-500/20" />
-        </CardContent>
-      </Card>
-
-      <Card className="md:col-span-1 relative overflow-hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-cyan-400" />
-            Recent Activity
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-neutral-300">
-            Showing last {Math.min(10, events.length)} events
-          </p>
-          <div className="mt-4 space-y-3">
-            {events.slice(-5).reverse().map((ev, i) => {
-              const a = String(ev.action || "").toLowerCase();
-              const color = a.includes("error")
-                ? "red"
-                : a.includes("warn")
-                ? "yellow"
-                : "cyan";
-              const dot =
-                color === "red"
-                  ? "bg-red-500"
-                  : color === "yellow"
-                  ? "bg-yellow-400"
-                  : "bg-cyan-400";
-              return (
-                <div key={i} className="relative pl-4 border-l border-neutral-800">
-                  <span className={`absolute -left-1 top-2 h-2 w-2 rounded-full ${dot}`} />
-                  <div className="flex items-center justify-between rounded-md px-3 py-2 bg-neutral-900/40 border border-neutral-800">
-                    <span className="text-sm font-medium text-neutral-100">{ev.action}</span>
-                    <span className="text-xs text-neutral-400">{new Date(ev.timestamp).toLocaleTimeString()}</span>
+      {loading ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" variant="primary" />
+          <p className="mt-3 text-muted">Loading dashboard...</p>
+        </div>
+      ) : (
+        <>
+          {/* Stats Cards */}
+          <Row className="g-3 mb-3">
+            <Col md={6} lg={3}>
+              <Card className="border-0 shadow-sm h-100 hover-lift">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <p className="text-muted mb-1 text-uppercase small fw-semibold">Active Rides</p>
+                      <h2 className="fw-bold text-primary mb-0">{activeRides.length}</h2>
+                    </div>
+                    <div className="bg-primary bg-opacity-10 p-3 rounded-circle">
+                      <i className="bi bi-broadcast text-primary fs-4"></i>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-            {events.length === 0 && (
-              <div className="space-y-2">
-                <div className="h-6 w-full rounded-md bg-neutral-800 animate-pulse" />
-                <div className="h-6 w-5/6 rounded-md bg-neutral-800 animate-pulse" />
-                <div className="h-6 w-4/6 rounded-md bg-neutral-800 animate-pulse" />
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                  <div className="mt-3">
+                    <span className="badge bg-success bg-opacity-10 text-success">
+                      <i className="bi bi-arrow-up me-1"></i>Live
+                    </span>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col md={6} lg={3}>
+              <Card className="border-0 shadow-sm h-100 hover-lift">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <p className="text-muted mb-1 text-uppercase small fw-semibold">Total Rides</p>
+                      <h2 className="fw-bold text-info mb-0">{rides.length}</h2>
+                    </div>
+                    <div className="bg-info bg-opacity-10 p-3 rounded-circle">
+                      <i className="bi bi-car-front text-info fs-4"></i>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <ProgressBar now={75} variant="info" style={{ height: '6px' }} />
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col md={6} lg={3}>
+              <Card className="border-0 shadow-sm h-100 hover-lift">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <p className="text-muted mb-1 text-uppercase small fw-semibold">Completed</p>
+                      <h2 className="fw-bold text-success mb-0">{completedToday.length}</h2>
+                    </div>
+                    <div className="bg-success bg-opacity-10 p-3 rounded-circle">
+                      <i className="bi bi-check-circle text-success fs-4"></i>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <small className="text-muted">Today's trips</small>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col md={6} lg={3}>
+              <Card className="border-0 shadow-sm h-100 hover-lift">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <p className="text-muted mb-1 text-uppercase small fw-semibold">Revenue</p>
+                      <h2 className="fw-bold text-warning mb-0">₵{revenue.toFixed(2)}</h2>
+                    </div>
+                    <div className="bg-warning bg-opacity-10 p-3 rounded-circle">
+                      <i className="bi bi-cash-stack text-warning fs-4"></i>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <small className="text-success">
+                      <i className="bi bi-graph-up me-1"></i>+12.5%
+                    </small>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+
+          <Row className="g-3">
+            {/* Recent Activity */}
+            <Col lg={6}>
+              <Card className="border-0 shadow-sm h-100">
+                <Card.Header className="bg-white border-0 pt-4 pb-3">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <h5 className="fw-bold mb-0">
+                      <i className="bi bi-activity text-primary me-2"></i>
+                      Recent Activity
+                    </h5>
+                    <Badge bg="primary" pill>{events.length}</Badge>
+                  </div>
+                </Card.Header>
+                <Card.Body className="pt-0" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                  {events.length === 0 ? (
+                    <div className="text-center py-5 text-muted">
+                      <i className="bi bi-inbox fs-1 d-block mb-2"></i>
+                      <p>No recent activity</p>
+                    </div>
+                  ) : (
+                    <div className="activity-timeline">
+                      {events.slice(-10).reverse().map((ev, i) => {
+                        const action = String(ev.action || "").toLowerCase();
+                        const iconClass = action.includes("error") 
+                          ? "bi-exclamation-triangle text-danger"
+                          : action.includes("completed")
+                          ? "bi-check-circle text-success"
+                          : "bi-info-circle text-info";
+                        
+                        return (
+                          <div key={i} className="d-flex mb-3 pb-3 border-bottom">
+                            <div className="me-3">
+                              <div className="bg-light rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                <i className={`${iconClass} fs-5`}></i>
+                              </div>
+                            </div>
+                            <div className="flex-grow-1">
+                              <p className="mb-1 fw-semibold">{ev.action}</p>
+                              <small className="text-muted">
+                                {ev.actor && `By ${ev.actor} • `}
+                                {new Date(ev.timestamp).toLocaleString()}
+                              </small>
+                              {ev.detail && (
+                                <p className="mb-0 mt-1 small text-muted">{ev.detail}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Card.Body>
+              </Card>
+            </Col>
+
+            {/* Active Rides */}
+            <Col lg={6}>
+              <Card className="border-0 shadow-sm h-100">
+                <Card.Header className="bg-white border-0 pt-4 pb-3">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <h5 className="fw-bold mb-0">
+                      <i className="bi bi-geo-alt text-danger me-2"></i>
+                      Active Rides
+                    </h5>
+                    <Badge bg="danger" pill className="pulse">{activeRides.length}</Badge>
+                  </div>
+                </Card.Header>
+                <Card.Body className="pt-0" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                  {activeRides.length === 0 ? (
+                    <div className="text-center py-5 text-muted">
+                      <i className="bi bi-car-front fs-1 d-block mb-2"></i>
+                      <p>No active rides</p>
+                    </div>
+                  ) : (
+                    activeRides.map((ride, i) => {
+                      const statusColor = statusColors[ride.status?.toLowerCase()] || "secondary";
+                      return (
+                        <Card key={i} className="mb-3 border">
+                          <Card.Body className="p-3">
+                            <div className="d-flex justify-content-between align-items-start mb-2">
+                              <div>
+                                <h6 className="mb-1 fw-bold">
+                                  <i className="bi bi-person-circle me-2"></i>
+                                  Chat #{ride.chat}
+                                </h6>
+                                <p className="mb-0 small text-muted">
+                                  <i className="bi bi-truck me-1"></i>
+                                  {ride.product || "Standard"}
+                                </p>
+                              </div>
+                              <Badge bg={statusColor}>
+                                {ride.status}
+                              </Badge>
+                            </div>
+                            {ride.driver && (
+                              <div className="mt-2 pt-2 border-top">
+                                <small className="text-muted">
+                                  <i className="bi bi-person-badge me-1"></i>
+                                  Driver: <span className="fw-semibold">{ride.driver}</span>
+                                </small>
+                              </div>
+                            )}
+                          </Card.Body>
+                        </Card>
+                      );
+                    })
+                  )}
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </>
+      )}
+
+      <style jsx>{`
+        .hover-lift {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .hover-lift:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+        .pulse {
+          animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.6;
+          }
+        }
+      `}</style>
     </div>
   );
 }

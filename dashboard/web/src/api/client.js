@@ -50,4 +50,28 @@ export async function opsRides() {
   return r.data;
 }
 
+// Drivers API
+export async function getDrivers() {
+  const opsBase = import.meta.env.VITE_OPERATIONS_URL || "http://localhost:3000";
+  const r = await axios.get(`${opsBase}/api/drivers`);
+  return r.data;
+}
+
+export async function createDriver(driver) {
+  const opsBase = import.meta.env.VITE_OPERATIONS_URL || "http://localhost:3000";
+  const r = await axios.post(`${opsBase}/api/drivers`, driver);
+  return r.data;
+}
+
+export async function updateDriver(id, updates) {
+  const opsBase = import.meta.env.VITE_OPERATIONS_URL || "http://localhost:3000";
+  const r = await axios.put(`${opsBase}/api/drivers`, { id, ...updates });
+  return r.data;
+}
+
+export async function getUsers() {
+  const r = await api.get("/users");
+  return r.data.users || [];
+}
+
 export default api;

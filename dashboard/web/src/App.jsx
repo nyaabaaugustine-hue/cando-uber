@@ -10,6 +10,7 @@ import LiveOps from "./pages/LiveOps";
 import MapView from "./pages/MapView";
 import Analytics from "./pages/Analytics";
 import Users from "./pages/Users";
+import Drivers from "./pages/Drivers";
 import Transactions from "./pages/Transactions";
 import Logs from "./pages/Logs";
 
@@ -30,6 +31,7 @@ function AppRoutes() {
         <Route path="map" element={<RoleGuard role="dispatcher"><MapView /></RoleGuard>} />
         <Route path="analytics" element={<RoleGuard role="admin"><Analytics /></RoleGuard>} />
         <Route path="users" element={<RoleGuard role="admin"><Users /></RoleGuard>} />
+        <Route path="drivers" element={<RoleGuard role="dispatcher"><Drivers /></RoleGuard>} />
         <Route path="transactions" element={<RoleGuard role="dispatcher"><Transactions /></RoleGuard>} />
         <Route path="logs" element={<RoleGuard role="dispatcher"><Logs /></RoleGuard>} />
       </Route>
