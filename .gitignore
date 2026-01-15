@@ -1,21 +1,10 @@
-# Secrets and environment
-.env
-**/.env
-dispatch_chat_id.txt
-
-# Logs
-*.log
-
-# Build/Gradle
-.gradle/
-build/
-**/build/
-
-# IDE
-.idea/
-*.iml
-out/
-
-# OS
-.DS_Store
-Thumbs.db
+node_modules/
+**/node_modules/
+dashboard/web/dist/
+dashboard/web/.vite/
+dashboard/web/.cache/
+dashboard/api/.env
+dashboard/api/.env.local
+dashboard/api/.env.production
+dashboard/web/.env
+dashboard/web/.env.local
