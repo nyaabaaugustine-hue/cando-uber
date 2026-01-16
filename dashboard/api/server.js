@@ -9,8 +9,15 @@ import jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import speakeasy from "speakeasy";
 import fetch from "node-fetch";
+import { WebSocketServer } from "ws";
+import http from "http";
 
 const app = express();
+
+// Store for connected clients and driver locations
+const clients = new Set();
+const driverLocations = new Map();
+
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change";
 const TOKEN_EXPIRES = process.env.TOKEN_EXPIRES ? parseInt(process.env.TOKEN_EXPIRES, 10) : 3600;
@@ -181,6 +188,168 @@ app.get("/ops/rides", requireAuth, (req, res) => {
   }).catch(() => res.json([]));
 });
 
-app.listen(PORT, () => {
+// Create HTTP server to wrap Express app for WebSocket support
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+
+// Handle WebSocket connections
+wss.on('connection', async (ws) => {
+  console.log('New client connected');
+  clients.add(ws);
+
+  // Send initial driver locations to new client from Java backend
+  try {
+    const javaBackendUrl = process.env.JAVA_BACKEND_URL || 'http://localhost:8088';
+    const response = await fetch(`${javaBackendUrl}/api/drivers/location`);
+    
+    if (response.ok) {
+      const drivers = await response.json();
+      ws.send(JSON.stringify({
+        type: 'driver_locations',
+        data: drivers
+      }));
+    } else {
+      // Fallback to cached locations
+      ws.send(JSON.stringify({
+        type: 'driver_locations',
+        data: Array.from(driverLocations.entries()).map(([id, location]) => ({ id, ...location }))
+      }));
+    }
+  } catch (error) {
+    // Fallback to cached locations
+    ws.send(JSON.stringify({
+      type: 'driver_locations',
+      data: Array.from(driverLocations.entries()).map(([id, location]) => ({ id, ...location }))
+    }));
+  }
+
+  ws.on('close', () => {
+    console.log('Client disconnected');
+    clients.delete(ws);
+  });
+});
+
+// Function to broadcast driver location updates to all connected clients
+function broadcastDriverLocations() {
+  const locations = Array.from(driverLocations.entries()).map(([id, location]) => ({ id, ...location }));
+  
+  clients.forEach((client) => {
+    if (client.readyState === 1) { // WebSocket.OPEN = 1
+      client.send(JSON.stringify({
+        type: 'driver_locations',
+        data: locations
+      }));
+    }
+  });
+}
+
+// Periodically fetch driver locations from Java backend
+setInterval(async () => {
+  try {
+    const javaBackendUrl = process.env.JAVA_BACKEND_URL || 'http://localhost:8088';
+    const response = await fetch(`${javaBackendUrl}/api/drivers/location`);
+    
+    if (response.ok) {
+      const drivers = await response.json();
+      
+      // Update our local cache and broadcast to WebSocket clients
+      drivers.forEach(driver => {
+        driverLocations.set(driver.id.toString(), {
+          lat: driver.lat,
+          lng: driver.lng,
+          bearing: driver.bearing,
+          lastUpdated: new Date(driver.lastUpdated).toISOString()
+        });
+      });
+      
+      broadcastDriverLocations();
+    }
+  } catch (error) {
+    console.error('Error fetching driver locations from Java backend:', error);
+  }
+}, 5000); // Update every 5 seconds
+
+// Endpoint to manually update driver location (for testing) - REMOVED DUE TO DUPLICATE ROUTE WITH AUTHENTICATION REQUIREMENTS
+// Keeping only the version that forwards to Java backend (see line 297+)
+
+// Endpoint to get current driver locations
+app.get('/api/drivers/locations', async (req, res) => {
+  try {
+    // Get driver locations from Java backend
+    const javaBackendUrl = process.env.JAVA_BACKEND_URL || 'http://localhost:8088';
+    const response = await fetch(`${javaBackendUrl}/api/drivers/location`);
+    
+    if (response.ok) {
+      const drivers = await response.json();
+      res.json({ drivers });
+    } else {
+      res.status(response.status).json({ error: 'Failed to fetch from Java backend' });
+    }
+  } catch (error) {
+    console.error('Error fetching driver locations:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Forward driver location updates to Java backend
+app.post('/api/drivers/:id/location', async (req, res) => {
+  const { id } = req.params;
+  const { lat, lng, bearing } = req.body;
+  
+  if (typeof lat !== 'number' || typeof lng !== 'number') {
+    return res.status(400).json({ error: 'Invalid coordinates' });
+  }
+  
+  try {
+    // Forward to Java backend
+    const javaBackendUrl = process.env.JAVA_BACKEND_URL || 'http://localhost:8088';
+    const response = await fetch(`${javaBackendUrl}/api/drivers/location`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id, lat, lng, bearing })
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      
+      // Update our local cache
+      driverLocations.set(id, {
+        lat,
+        lng,
+        bearing: bearing || 0,
+        lastUpdated: new Date().toISOString()
+      });
+      
+      broadcastDriverLocations();
+      res.json(result);
+    } else {
+      // Fallback to local storage if Java backend is not available
+      driverLocations.set(id, {
+        lat,
+        lng,
+        bearing: bearing || 0,
+        lastUpdated: new Date().toISOString()
+      });
+      
+      broadcastDriverLocations();
+      res.json({ ok: true });
+    }
+  } catch (error) {
+    // Fallback to local storage if Java backend is not available
+    driverLocations.set(id, {
+      lat,
+      lng,
+      bearing: bearing || 0,
+      lastUpdated: new Date().toISOString()
+    });
+    
+    broadcastDriverLocations();
+    res.json({ ok: true });
+  }
+});
+
+server.listen(PORT, () => {
   process.stdout.write(`API listening on http://localhost:${PORT}\n`);
 });

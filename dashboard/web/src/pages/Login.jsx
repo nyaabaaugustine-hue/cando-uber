@@ -132,13 +132,6 @@ export default function Login() {
                     )}
                   </Button>
                 </Form>
-
-                <div className="text-center mt-3">
-                  <small className="text-muted">
-                    <i className="bi bi-info-circle me-1"></i>
-                    Demo: admin@local.test / Admin123!
-                  </small>
-                </div>
               </Card.Body>
               
               <div className="bg-light p-2 text-center border-top">
