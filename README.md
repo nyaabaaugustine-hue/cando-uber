@@ -1,85 +1,139 @@
-# CyberCando Driver Location Tracking System
+# CyberCando Transport Dashboard
 
-Real-time driver location tracking system for the CyberCando transport platform.
+A real-time driver location tracking system for the CyberCando transport platform.
 
-## Overview
+## 🚀 Features
 
-This system enables real-time tracking of driver locations with the following components:
+- **Real-time Driver Tracking**: Live location updates via WebSocket
+- **Dashboard Analytics**: Comprehensive operational metrics
+- **User Management**: Role-based access control (admin/dispatcher/viewer)
+- **Interactive Maps**: Leaflet-powered geographic visualization
+- **Authentication**: Secure JWT-based login system
 
-- **Java Backend**: Handles driver registration and location updates (port 8088)
-- **Node.js API Gateway**: Provides WebSocket connectivity and API endpoints (port 8080) 
-- **React Frontend**: Visualizes driver locations on a map
+## 🛠️ Tech Stack
 
-## Features
+### Frontend
+- React 18 with Vite
+- TailwindCSS for styling
+- React Router for navigation
+- Axios for API communication
+- Leaflet for maps
 
-- Real-time location tracking via WebSocket
-- Driver location updates every 5 seconds
-- Interactive map visualization
-- Driver status monitoring
+### Backend
+- Node.js with Express
+- WebSocket for real-time updates
+- JWT authentication
+- CSRF protection
 
-## Quick Start
+### Mobile Driver App
+- Java-based Android application
+- Real-time location broadcasting
+- WebSocket connectivity
 
-1. **Install Dependencies**:
-   ```bash
-   npm run install-deps
-   ```
+## 📁 Project Structure
 
-2. **Start All Services**:
-   ```bash
-   npm run start-all
-   ```
-   Or run each service separately:
-   - Java Backend: `npm run start-java`
-   - API Gateway: `npm run start-api`
-   - Frontend: `npm run start-web`
+```
+candi2.0/
+├── dashboard/
+│   ├── api/          # Node.js backend server
+│   ├── web/          # React frontend
+│   └── dash/         # Legacy dashboard (Horizon theme)
+├── driber/           # Java mobile driver application
+├── public/           # Static assets for deployment
+└── server.js         # Combined deployment server
+```
 
-3. **View the Dashboard**:
-   - Open browser to: http://localhost:5173
-   - Navigate to Map View: http://localhost:5173/map
+## 🚀 Quick Start
 
-## Testing
+### Prerequisites
+- Node.js 16+
+- Java 8+ (for driver app)
+- npm or yarn
 
-Run the location tracking test:
+### Development Setup
+
+1. **Install dependencies:**
 ```bash
-npm run test-location
+# Install API dependencies
+cd dashboard/api
+npm install
+
+# Install frontend dependencies  
+cd ../web
+npm install
 ```
 
-## Architecture
+2. **Start development servers:**
+```bash
+# Terminal 1: Start API server
+cd dashboard/api
+node server.js
 
-```
-Driver Apps → Java Backend (8088) → API Gateway (8080) → React Frontend (5173)
-                                    ↓
-                                WebSocket Updates
-```
+# Terminal 2: Start React frontend
+cd dashboard/web
+npm run dev
 
-## API Endpoints
-
-- `GET /api/drivers/location` (Java Backend) - Get all active driver locations
-- `POST /api/drivers/location` (Java Backend) - Update driver location
-- `GET /api/drivers/locations` (API Gateway) - Proxy to Java backend
-- `POST /api/drivers/:id/location` (API Gateway) - Proxy to Java backend
-
-## WebSocket Messages
-
-Format:
-```json
-{
-  "type": "driver_locations",
-  "data": [
-    {
-      "id": "driver-1",
-      "lat": 37.7749,
-      "lng": -122.4194,
-      "bearing": 90,
-      "lastUpdated": "2023-10-27T10:00:00.000Z"
-    }
-  ]
-}
+# Terminal 3: Start driver simulator (optional)
+node mock_driver_app.js
 ```
 
-## Files Structure
+### Production Deployment
 
-- `driber/` - Java backend with driver registry and location tracking
-- `dashboard/api/` - Node.js API gateway with WebSocket support
-- `dashboard/web/` - React frontend with map visualization
-- `DRIVER_LOCATION_TRACKING.md` - Detailed architecture documentation
+1. **Build the frontend:**
+```bash
+cd dashboard/web
+npm run build
+```
+
+2. **Start production server:**
+```bash
+# From project root
+npm start
+```
+
+## 🔧 Environment Variables
+
+Create `.env` files in respective directories:
+
+**dashboard/api/.env:**
+```env
+PORT=8080
+JWT_SECRET=your-secret-key
+TOKEN_EXPIRES=3600
+CORS_ORIGIN=http://localhost:5173
+OPERATIONS_BASE=http://localhost:8090
+```
+
+## 🎯 Default Credentials
+
+**Admin Account:**
+- Email: `admin@local.test`
+- Password: `Admin123!`
+
+## 🌐 API Endpoints
+
+- `POST /auth/login` - User authentication
+- `GET /me` - Current user info
+- `GET /ops/events` - Operational events
+- `GET /ops/rides` - Ride information
+- `GET /users` - User management (admin only)
+
+## 📱 Driver App Integration
+
+The Java-based driver application connects via WebSocket to broadcast real-time location data to the dashboard.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For issues and questions, please open an issue on GitHub.
