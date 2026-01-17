@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberCando Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e8f5e8;
+            border-radius: 4px;
+            border-left: 4px solid #4caf50;
+        }
+        .links {
+            margin-top: 30px;
+        }
+        .links a {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: #2196f3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .links a:hover {
+            background-color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 CyberCando Transport Dashboard</h1>
+        
+        <div class="status">
+            <h2>✅ System Status: Operational</h2>
+            <p>Backend API is running and ready to serve requests</p>
+        </div>
+
+        <div class="links">
+            <a href="/api/health">🏥 API Health Check</a>
+            <a href="/login">🔒 Login Page</a>
+            <a href="/">🏠 Dashboard Home</a>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background-color: #f9f9f9; border-radius: 4px;">
+            <h3>🔧 Development Information</h3>
+            <ul>
+                <li><strong>API Endpoint:</strong> <code>/api/*</code></li>
+                <li><strong>WebSocket:</strong> Real-time driver tracking</li>
+                <li><strong>Authentication:</strong> JWT-based login system</li>
+                <li><strong>Frontend:</strong> React with Vite (build pending)</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
