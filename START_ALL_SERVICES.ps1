@@ -1,26 +1,45 @@
-Write-Host "Starting CyberCando Real-Time Driver Location Tracking System..." -ForegroundColor Green
+Write-Host "Starting CyberCando 2.0 Services..." -ForegroundColor Green
 Write-Host ""
 
-Write-Host "Setting up environment..." -ForegroundColor Yellow
-$env:JAVA_BACKEND_URL = "http://localhost:8088"
+Write-Host "Checking prerequisites..." -ForegroundColor Yellow
 
-Write-Host "Starting Java Backend (Port 8088)..." -ForegroundColor Yellow
-Start-Process -FilePath "cmd" -ArgumentList "/c", "cd /d $PSScriptRoot\driber\source && gradlew run"
-
-Start-Sleep -Seconds 5
-
-Write-Host "Starting Node.js API Gateway (Port 8080)..." -ForegroundColor Yellow
-Start-Process -FilePath "cmd" -ArgumentList "/c", "cd /d $PSScriptRoot\dashboard\api && npm install && node server.js"
-
-Start-Sleep -Seconds 5
-
-Write-Host "Starting React Frontend (Port 5173)..." -ForegroundColor Yellow
-Start-Process -FilePath "cmd" -ArgumentList "/c", "cd /d $PSScriptRoot\dashboard\web && npm install && npm run dev"
+# Check if Java is available
+try {
+    $javaVersion = java -version 2>&1
+    Write-Host "✅ Java is available" -ForegroundColor Green
+} catch {
+    Write-Host "❌ Java is not installed or not in PATH" -ForegroundColor Red
+    Pause
+    exit 1
+}
 
 Write-Host ""
-Write-Host "All services started!" -ForegroundColor Green
-Write-Host "- Java Backend: http://localhost:8088/dashboard" -ForegroundColor Cyan
-Write-Host "- API Gateway: http://localhost:8080" -ForegroundColor Cyan
-Write-Host "- Frontend: http://localhost:5173" -ForegroundColor Cyan
+Write-Host "Compiling Java backend..." -ForegroundColor Yellow
+
+Set-Location "c:\Users\TGNE\Documents\candi2.0\driber\source"
+
+# Create bin directory if it doesn't exist
+if (!(Test-Path "bin")) {
+    New-Item -ItemType Directory -Name "bin" | Out-Null
+}
+
+# Compile Java files
+$compileResult = javac -cp "lib/*;src/main/java" -d bin src/main/java/*.java 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "❌ Compilation failed:" -ForegroundColor Red
+    Write-Host $compileResult -ForegroundColor Red
+    Pause
+    exit 1
+}
+
+Write-Host "✅ Java backend compiled successfully" -ForegroundColor Green
+
 Write-Host ""
-Write-Host "To view the map: Open your browser to http://localhost:5173/map" -ForegroundColor Magenta
+Write-Host "Starting CyberCando backend with auto-registration and location tracking..." -ForegroundColor Yellow
+
+Set-Location "c:\Users\TGNE\Documents\candi2.0"
+
+# Start the main application
+java -cp "driber/source/bin;driber/source/lib/*" Main
+
+Pause

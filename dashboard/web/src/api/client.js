@@ -50,6 +50,22 @@ export async function opsRides() {
   return r.data;
 }
 
+export async function notifyAdmin(event) {
+  const r = await api.post("/ops/notify", event);
+  return r.data;
+}
+
+// Ride Management API
+export async function acceptRide(rideId) {
+  const r = await api.post(`/ops/rides/${rideId}/accept`);
+  return r.data;
+}
+
+export async function declineRide(rideId) {
+  const r = await api.post(`/ops/rides/${rideId}/decline`);
+  return r.data;
+}
+
 // Drivers API
 export async function getDrivers() {
   const opsBase = import.meta.env.VITE_OPERATIONS_URL || "http://localhost:3000";

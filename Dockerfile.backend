@@ -1,0 +1,28 @@
+FROM eclipse-temurin:17-jdk-alpine
+
+WORKDIR /app
+
+# Copy gradle wrapper files
+COPY driber/source/gradlew .
+COPY driber/source/gradle ./gradle
+COPY driber/source/build.gradle .
+COPY driber/source/settings.gradle .
+
+# Make gradlew executable
+RUN chmod +x ./gradlew
+
+# Download dependencies
+RUN ./gradlew dependencies --no-daemon
+
+# Copy source code
+COPY driber/source/src ./src
+COPY driber/source/bin ./bin
+
+# Build the application
+RUN ./gradlew build --no-daemon
+
+# Expose port
+EXPOSE 8088
+
+# Run the application
+CMD ["./gradlew", "run", "--no-daemon"]

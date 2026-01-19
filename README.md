@@ -122,6 +122,22 @@ OPERATIONS_BASE=http://localhost:8090
 
 The Java-based driver application connects via WebSocket to broadcast real-time location data to the dashboard.
 
+### Automated Driver Registration & Location Tracking
+
+CyberCando 2.0 includes an advanced automated driver registration system:
+
+- **Automatic Registration**: When drivers join the designated Telegram group, they are automatically registered in the system
+- **Real-time Location Tracking**: Drivers can share their location in the group to appear on the dashboard map in real-time
+- **Automatic Unregistration**: When drivers leave the group, they are marked as inactive
+- **Security Auditing**: All driver activities are logged for security and monitoring purposes
+
+#### How it Works:
+1. Create a Telegram group for drivers
+2. Add the bot to the group
+3. Drivers join the group (auto-registered)
+4. Drivers share their location in the group (appears on dashboard)
+5. Drivers leave the group (auto-unregistered)
+
 ## 🤝 Contributing
 
 1. Fork the repository

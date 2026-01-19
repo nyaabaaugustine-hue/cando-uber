@@ -285,7 +285,7 @@ export default function Drivers() {
                         <div className="small">
                           <div><i className="bi bi-star-fill text-warning me-1"></i>{driver.rating || 0}</div>
                           <div><i className="bi bi-truck me-1"></i>{driver.totalTrips || 0} trips</div>
-                          <div className="text-success fw-semibold">₵{driver.earnings?.toFixed(2) || 0}</div>
+                          <div className="text-success fw-semibold">GH₵{driver.earnings?.toFixed(2) || 0}</div>
                         </div>
                       </td>
                       <td>

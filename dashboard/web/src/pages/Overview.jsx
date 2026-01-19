@@ -129,7 +129,7 @@ export default function Overview() {
                   <div className="d-flex justify-content-between align-items-start">
                     <div>
                       <p className="text-muted mb-1 text-uppercase small fw-semibold">Revenue</p>
-                      <h2 className="fw-bold text-warning mb-0">₵{revenue.toFixed(2)}</h2>
+                      <h2 className="fw-bold text-warning mb-0">GH₵{revenue.toFixed(2)}</h2>
                     </div>
                     <div className="bg-warning bg-opacity-10 p-3 rounded-circle">
                       <i className="bi bi-cash-stack text-warning fs-4"></i>

@@ -1,137 +1,125 @@
-# Real-Time Driver Location Tracking System
+# CyberCando Driver Location Tracking System
 
-This document describes the real-time driver location tracking system implemented in the CyberCando platform.
+## Overview
+The CyberCando Driver Location Tracking System enables real-time tracking of driver locations through an automated registration and location sharing mechanism via Telegram groups.
 
-## Architecture Overview
+## Key Features
 
-The system consists of three main components:
+### 1. Automated Driver Registration
+- **Automatic Registration**: When a new member joins the designated Telegram driver group, they are automatically registered as a driver
+- **Information Capture**: Automatically captures driver's name, Telegram ID, and other relevant information
+- **Welcome Message**: Sends a welcome message to the new driver with instructions
 
-1. **Java Backend (Driver Service)** - Handles driver registration and location updates
-2. **Node.js API Gateway** - Provides WebSocket connectivity and API endpoints
-3. **React Frontend** - Visualizes driver locations on a map
+### 2. Real-time Location Tracking
+- **Location Sharing**: Drivers can share their current location in the Telegram group
+- **Automatic Updates**: Locations are automatically updated on the dashboard every 5 seconds
+- **GPS Coordinates**: Captures precise latitude and longitude coordinates
+- **Direction Tracking**: Includes bearing/direction information when available
 
-## Components
+### 3. Dashboard Integration
+- **Live Map Display**: Shows all active drivers with their current locations on an interactive map
+- **Real-time Updates**: API endpoint `/api/live/drivers` provides live driver locations
+- **Driver Information**: Displays driver name, vehicle type, and plate number
+- **Status Monitoring**: Shows driver availability status
 
-### 1. Java Backend (Dashboard Server)
+### 4. Automatic Driver Management
+- **Auto Unregistration**: When drivers leave the Telegram group, they are automatically marked as inactive
+- **Inactivity Cleanup**: Drivers who haven't updated their location in 30 minutes are marked as offline
+- **Status Transitions**: Automatically manages driver status (active/inactive/online/offline)
 
-The Java backend runs on port 8088 by default and provides:
-- `/api/drivers` - Manage driver registration and profiles
-- `/api/drivers/location` - Receive real-time location updates from drivers
-- Driver registry with location tracking capabilities
+### 5. Security & Audit Trail
+- **Activity Logging**: All driver activities are logged with timestamps
+- **Security Auditing**: Maintains audit trails for all system interactions
+- **User Attribution**: Links all actions to specific Telegram users
 
-### 2. Node.js API Gateway
+## Technical Implementation
 
-The API gateway runs on port 8080 by default and provides:
-- WebSocket endpoint for real-time location updates to frontend
-- `/api/drivers/locations` - Fetch current driver locations
-- `/api/drivers/:id/location` - Update driver location
-- Connection proxy to Java backend
+### API Endpoints
+- `GET /api/live/drivers` - Returns all active drivers with current locations
+- `POST /api/driver/register` - Manual driver registration endpoint
+- `GET /api/drivers` - Returns all registered drivers
+- `GET /api/events` - Returns activity logs
 
-### 3. React Frontend
+### Data Model
+Each tracked driver includes:
+- Driver ID (Telegram user ID)
+- Name
+- Current GPS coordinates (lat/lng)
+- Vehicle type and plate number
+- Status (active/inactive)
+- Last update timestamp
+- Bearing/direction
 
-The dashboard frontend displays:
-- Real-time map visualization of driver locations
-- List of active drivers with location details
-- Connection status indicator
+### Architecture
+- **Telegram Bot Integration**: Listens to group events and location sharing
+- **Java Backend**: Processes registration and location updates
+- **HTTP Server**: Provides REST API for dashboard consumption
+- **WebSocket (Optional)**: For real-time updates to dashboard
 
-## How It Works
+## Setup Instructions
 
-1. Drivers send location updates to the Java backend via HTTP POST requests
-2. The Java backend stores the location data in the Driver Registry
-3. The Node.js API gateway polls the Java backend for updates
-4. When locations change, the API gateway broadcasts updates via WebSocket
-5. The frontend receives WebSocket messages and updates the map in real-time
-
-## Running the System
-
-### Prerequisites
-- Java 8+ 
-- Node.js 18+
-
-### Starting the Services
-
-1. **Start the Java backend (driver service):**
-   ```bash
-   cd driber/source
-   ./gradlew run
-   ```
-   Or if running directly:
-   ```bash
-   java -jar build/libs/driver-service.jar
-   ```
-
-2. **Start the Node.js API gateway:**
-   ```bash
-   cd dashboard/api
-   npm install
-   npm start
-   ```
-
-3. **Start the React frontend:**
-   ```bash
-   cd dashboard/web
-   npm install
-   npm run dev
-   ```
-
-### Testing with Mock Driver App
-
-A mock driver application is provided to simulate driver location updates:
-
+### 1. Environment Configuration
 ```bash
-# Install axios dependency
-npm install axios
-
-# Run the mock driver app
-node mock_driver_app.js
+# Required environment variables
+TELEGRAM_BOT_TOKEN=your_bot_token
+RUN_DASHBOARD=true
+DASHBOARD_PORT=8088
 ```
 
-## API Endpoints
+### 2. Telegram Group Setup
+1. Create a Telegram group for drivers
+2. Add your bot to the group with admin rights
+3. Optionally set the group ID as DISPATCH_CHAT_ID
 
-### Java Backend (Port 8088)
-- `GET /api/drivers/location` - Get all active driver locations
-- `POST /api/drivers/location` - Update driver location
+### 3. Starting the System
+```bash
+# Compile the Java backend
+javac -cp "driber/source/lib/*" driber/source/src/main/java/*.java
 
-### Node.js API Gateway (Port 8080)
-- `GET /api/drivers/locations` - Get driver locations (proxies to Java backend)
-- `POST /api/drivers/:id/location` - Update driver location
-- WebSocket connection for real-time updates
-
-## WebSocket Messages
-
-The system uses WebSocket messages with the following format:
-```json
-{
-  "type": "driver_locations",
-  "data": [
-    {
-      "id": "driver-1",
-      "lat": 37.7749,
-      "lng": -122.4194,
-      "bearing": 90,
-      "lastUpdated": "2023-10-27T10:00:00.000Z"
-    }
-  ]
-}
+# Start the system
+java -cp "driber/source/bin:driber/source/lib/*" Main
 ```
 
-## Data Model
+## Usage Workflow
 
-Driver location data includes:
-- `id`: Unique driver identifier
-- `lat`: Latitude coordinate
-- `lng`: Longitude coordinate
-- `bearing`: Direction in degrees (0-359)
-- `lastUpdated`: Timestamp of last location update
+### For Drivers
+1. Join the designated Telegram driver group
+2. Receive automatic registration confirmation
+3. Share location in the group to appear on the dashboard
+4. Leave the group when going off-duty
+
+### For Dispatchers
+1. Monitor the dashboard at `http://localhost:8088/dashboard`
+2. View all active drivers in real-time
+3. Track driver availability and locations
+4. Manage ride assignments based on location data
+
+## Benefits
+
+- **Zero Manual Setup**: Drivers automatically register by joining the group
+- **Real-time Tracking**: Live location updates without additional apps
+- **Low Barrier to Entry**: Uses familiar Telegram interface
+- **Automatic Management**: Handles registration/unregistration automatically
+- **Security Focused**: Comprehensive audit logging
+- **Scalable**: Handles multiple drivers simultaneously
 
 ## Troubleshooting
 
-1. **Connection Issues:** Ensure both services are running and ports are accessible
-2. **No Driver Updates:** Check that the Java backend is receiving location updates
-3. **Frontend Not Updating:** Verify WebSocket connection is established (check browser console)
+### Common Issues
+- Ensure bot has proper permissions in the Telegram group
+- Verify TELEGRAM_BOT_TOKEN is correctly configured
+- Check that the dashboard port is not in use
+- Confirm Java version compatibility (requires Java 8+)
 
-## Security
+### API Testing
+Use the test script to verify functionality:
+```bash
+node TEST_DRIVER_LOCATION_TRACKING.js
+```
 
-- API endpoints require authentication
-- Driver location data is only accessible to authorized users
-- Communication uses secure protocols in production
+## Security Considerations
+
+- All driver data is logged for audit purposes
+- Location sharing is opt-in via group participation
+- Driver privacy is maintained through secure logging
+- Access to location data is restricted to authorized personnel

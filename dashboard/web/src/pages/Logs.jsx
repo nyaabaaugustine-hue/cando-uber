@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Card, Table, Badge, Form, InputGroup, Button } from "react-bootstrap";
-import { opsEvents } from "../api/client";
+import { opsEvents, notifyAdmin } from "../api/client";
 
 export default function Logs() {
   const [events, setEvents] = useState([]);
   const [filter, setFilter] = useState("");
+  const [sendingId, setSendingId] = useState(null);
 
   useEffect(() => {
     loadEvents();
@@ -18,6 +19,20 @@ export default function Logs() {
       setEvents(data);
     } catch (error) {
       console.error("Failed to load events:", error);
+    }
+  };
+  
+  const sendToTelegram = async (ev) => {
+    try {
+      setSendingId(ev.timestamp);
+      await notifyAdmin({
+        action: ev.action,
+        actor: ev.actor,
+        detail: ev.detail
+      });
+    } catch (e) {
+    } finally {
+      setSendingId(null);
     }
   };
 
@@ -144,6 +159,7 @@ export default function Logs() {
                     <th className="border-0">Action</th>
                     <th className="border-0">Actor</th>
                     <th className="border-0">Details</th>
+                    <th className="border-0">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -174,6 +190,20 @@ export default function Logs() {
                           <small className="text-muted">
                             {ev.detail || "-"}
                           </small>
+                        </td>
+                        <td>
+                          <Button 
+                            variant="outline-secondary" 
+                            size="sm" 
+                            onClick={() => sendToTelegram(ev)}
+                            disabled={sendingId === ev.timestamp}
+                          >
+                            {sendingId === ev.timestamp ? (
+                              <span><i className="bi bi-hourglass-split me-1"></i>Sending</span>
+                            ) : (
+                              <span><i className="bi bi-send me-1"></i>Notify</span>
+                            )}
+                          </Button>
                         </td>
                       </tr>
                     );

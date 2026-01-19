@@ -11,6 +11,7 @@ import speakeasy from "speakeasy";
 import fetch from "node-fetch";
 import { WebSocketServer } from "ws";
 import http from "http";
+import fs from "fs";
 
 const app = express();
 
@@ -100,7 +101,7 @@ function requireRole(role) {
   };
 }
 
-app.post("/auth/login", loginLimiter, csrfProtection, (req, res) => {
+app.post("/auth/login", loginLimiter, (req, res) => {
   const { email, password, otp } = req.body || {};
   const u = users.get(String(email || "").toLowerCase());
   if (!u || !u.enabled) return res.status(401).json({ error: "invalid_credentials" });
@@ -127,6 +128,15 @@ app.get("/me", requireAuth, (req, res) => {
 
 app.get("/", (req, res) => {
   res.json({ ok: true, service: "cyber-dashboard-api" });
+});
+
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "healthy", 
+    timestamp: new Date().toISOString(),
+    service: "cyber-dashboard-api",
+    version: "1.0.0"
+  });
 });
 
 app.post("/auth/setup-2fa", requireAuth, csrfProtection, (req, res) => {
@@ -186,6 +196,86 @@ app.get("/ops/rides", requireAuth, (req, res) => {
   fetch(`${OPS_BASE}/api/rides`).then(r => r.text()).then(t => {
     res.type("application/json").send(t);
   }).catch(() => res.json([]));
+});
+
+// Accept ride endpoint
+app.post("/ops/rides/:id/accept", requireAuth, (req, res) => {
+  const { id } = req.params;
+  // Forward to Java backend
+  fetch(`${OPS_BASE}/api/rides/${id}/accept`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...req.body, acceptedBy: req.user?.email })
+  })
+  .then(r => r.json())
+  .then(data => {
+    res.json(data);
+  })
+  .catch(err => {
+    console.error('Error accepting ride:', err);
+    res.status(500).json({ error: 'Failed to accept ride' });
+  });
+});
+
+// Decline ride endpoint
+app.post("/ops/rides/:id/decline", requireAuth, (req, res) => {
+  const { id } = req.params;
+  // Forward to Java backend
+  fetch(`${OPS_BASE}/api/rides/${id}/decline`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...req.body, declinedBy: req.user?.email })
+  })
+  .then(r => r.json())
+  .then(data => {
+    res.json(data);
+  })
+  .catch(err => {
+    console.error('Error declining ride:', err);
+    res.status(500).json({ error: 'Failed to decline ride' });
+  });
+});
+
+app.post("/ops/notify", requireAuth, async (req, res) => {
+  try {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) return res.status(400).json({ error: "telegram_token_missing" });
+    let chatId = null;
+    const envId = process.env.DISPATCH_CHAT_ID;
+    if (envId && envId.trim().length > 0) {
+      try { chatId = BigInt(envId.trim()).toString(); } catch {}
+    }
+    if (!chatId) {
+      try {
+        const content = fs.readFileSync("dispatch_chat_id.txt", "utf-8").trim();
+        if (content.length > 0) chatId = BigInt(content).toString();
+      } catch {}
+    }
+    if (!chatId) return res.status(400).json({ error: "dispatch_chat_id_missing" });
+    const payload = req.body || {};
+    const actor = String(payload.actor || req.user?.email || "System");
+    const action = String(payload.action || "LOG");
+    const detail = String(payload.detail || payload.message || "");
+    const timestamp = new Date().toISOString();
+    const text =
+      `🗒️ Admin Log\n` +
+      `• Action: ${action}\n` +
+      `• Actor: ${actor}\n` +
+      (detail ? `• Details: ${detail}\n` : "") +
+      `• Time: ${timestamp}`;
+    const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true })
+    });
+    if (!tgRes.ok) {
+      return res.status(502).json({ error: "telegram_send_failed" });
+    }
+    const data = await tgRes.json();
+    res.json({ ok: true, telegram: data });
+  } catch (e) {
+    res.status(500).json({ error: "internal_error" });
+  }
 });
 
 // Create HTTP server to wrap Express app for WebSocket support
@@ -250,7 +340,8 @@ setInterval(async () => {
     const response = await fetch(`${javaBackendUrl}/api/drivers/location`);
     
     if (response.ok) {
-      const drivers = await response.json();
+      const responseJson = await response.json();
+      const drivers = Array.isArray(responseJson) ? responseJson : (responseJson.drivers || []);
       
       // Update our local cache and broadcast to WebSocket clients
       drivers.forEach(driver => {
@@ -280,7 +371,8 @@ app.get('/api/drivers/locations', async (req, res) => {
     const response = await fetch(`${javaBackendUrl}/api/drivers/location`);
     
     if (response.ok) {
-      const drivers = await response.json();
+      const responseJson = await response.json();
+      const drivers = Array.isArray(responseJson) ? responseJson : (responseJson.drivers || []);
       res.json({ drivers });
     } else {
       res.status(response.status).json({ error: 'Failed to fetch from Java backend' });

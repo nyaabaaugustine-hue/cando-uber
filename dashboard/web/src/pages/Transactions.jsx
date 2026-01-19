@@ -47,7 +47,7 @@ export default function Transactions() {
           <div className="d-flex justify-content-between align-items-center">
             <div>
               <h6 className="text-white-50 mb-2">Total Revenue</h6>
-              <h2 className="fw-bold mb-0">₵{totalRevenue.toFixed(2)}</h2>
+              <h2 className="fw-bold mb-0">GH₵{totalRevenue.toFixed(2)}</h2>
             </div>
             <div className="text-end">
               <h6 className="text-white-50 mb-2">Transactions</h6>
@@ -131,7 +131,7 @@ export default function Transactions() {
                         )}
                       </td>
                       <td className="fw-bold text-success">
-                        ₵{ride.fare || "15.50"}
+                        GH₵{ride.fare || "15.50"}
                       </td>
                       <td>
                         <Badge bg="success">

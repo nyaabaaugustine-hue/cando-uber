@@ -1,0 +1,20 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+numReplicas = 1
+sleepApplication = false
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[services.backend]
+port = 8088
+startCommand = "cd driber/source && ./gradlew run"
+
+[services.api]
+port = 8080
+startCommand = "cd dashboard/api && npm install && npm start"
+
+[services.web]
+port = 5173
+startCommand = "cd dashboard/web && npm install && npm run build && npm run preview"

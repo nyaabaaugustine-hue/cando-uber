@@ -1,5 +1,5 @@
 // Script to register a test driver
-const axios = require('axios');
+import axios from 'axios';
 
 async function registerTestDriver() {
   try {
