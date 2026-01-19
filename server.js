@@ -74,15 +74,12 @@ const server = app.listen(PORT, () => {
 
 // Handle graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
-  });
+  console.log('SIGTERM received');
+  // Don't close the server, just log the event
+  // In cloud environments like Sliplane, we typically don't want to close the server
 });
 
 process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
-  });
+  console.log('SIGINT received');
+  // Don't close the server, just log the event
 });
