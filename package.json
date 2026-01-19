@@ -6,7 +6,10 @@
   "description": "Real-time driver location tracking system for CyberCando transport platform",
   "scripts": {
     "start": "node server.js",
-    "build": "cd dashboard/web && npm run build",
+    "prebuild": "cd dashboard/web && npm install",
+    "build": "npm run build:frontend && npm run copy:frontend",
+    "build:frontend": "cd dashboard/web && npm run build",
+    "copy:frontend": "node -e \"try { const fs = require('fs'); const path = require('path'); if (!fs.existsSync('public')) fs.mkdirSync('public', {recursive:true}); if (fs.existsSync('dashboard/web/dist')) fs.cpSync('dashboard/web/dist', 'public', {recursive:true}); console.log('Frontend copied to public directory'); } catch(e) { console.log('Could not copy frontend: ' + e.message); }\"",
     "start-all": "start powershell -WindowStyle minimized -File \"./START_ALL_SERVICES.ps1\"",
     "test-location": "node TEST_DRIVER_LOCATION_TRACKING.js",
     "start-java": "cd driber/source && gradlew run",
@@ -26,6 +29,7 @@
   "dependencies": {
     "axios": "^1.13.2",
     "express": "^4.22.1",
-    "ws": "^8.19.0"
+    "ws": "^8.19.0",
+    "fs-extra": "^11.2.0"
   }
 }

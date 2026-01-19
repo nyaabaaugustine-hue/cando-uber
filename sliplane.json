@@ -1,0 +1,17 @@
+{
+  "project": "cybercando-transport-dashboard",
+  "settings": {
+    "build": {
+      "cmd": "npm run build",
+      "dir": "."
+    },
+    "run": {
+      "cmd": "npm start",
+      "port": 3000
+    },
+    "env": {
+      "NODE_ENV": "production",
+      "PORT": 3000
+    }
+  }
+}

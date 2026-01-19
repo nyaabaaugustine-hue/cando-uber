@@ -6,6 +6,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,7 +20,19 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from the public directory
 const staticDir = path.join(__dirname, 'public');
+const distDir = path.join(__dirname, 'dashboard/web/dist');
+
+// Create public directory if it doesn't exist
+if (!fs.existsSync(staticDir)) {
+    fs.mkdirSync(staticDir, { recursive: true });
+}
+
 app.use(express.static(staticDir));
+
+// Also serve from dist directory if it exists
+if (fs.existsSync(distDir)) {
+    app.use(express.static(distDir));
+}
 
 // API routes - proxy to the actual API server
 // For now, we'll just return a simple response
@@ -34,11 +47,18 @@ app.get('/api/health', (req, res) => {
 // Catch-all handler to serve index.html for any route not handled above
 // This enables client-side routing for React Router
 app.get('*', (req, res) => {
-  res.sendFile(path.join(staticDir, 'index.html'));
+  // Try to serve from public first, then from dist
+  const indexPath = fs.existsSync(path.join(staticDir, 'index.html')) 
+    ? path.join(staticDir, 'index.html')
+    : fs.existsSync(path.join(distDir, 'index.html'))
+      ? path.join(distDir, 'index.html')
+      : path.join(staticDir, 'index.html'); // fallback
+  
+  res.sendFile(indexPath);
 });
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📁 Serving static files from: ${staticDir}`);
+  console.log(`📁 Serving static files from: ${staticDir} and ${distDir}`);
   console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
 });
