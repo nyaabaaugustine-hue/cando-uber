@@ -44,6 +44,15 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Health check endpoint for Sliplane
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy', 
+    message: 'CyberCando Transport Dashboard is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Catch-all handler to serve index.html for any route not handled above
 // This enables client-side routing for React Router
 app.get('*', (req, res) => {
